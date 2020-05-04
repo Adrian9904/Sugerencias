@@ -1,0 +1,44 @@
+ name: Sugerencias
+ main: com.gmail.adriandc9904.Sugerencias
+ version: 1.0.0
+ author: adrian9904
+ descripcion: Plugin para controlar las sugerencias.
+ commands:
+   sugerencia:
+     description: Realiza una sugerencia al staff del servidor.
+     usage: /<command>
+     aliases:
+     - sugerencias
+     - sugerir
+     - sug
+     - suggest
+     - suggestion
+     - suggestions
+ permissions:
+   sugerencia.*:
+     description: Todos los permisos para las sugerencias.
+     children:
+       sugerencia.leer: true
+       sugerencia.borrar: true
+       sugerencia.lista: true
+       sugerencia.reload: true
+       sugerencia.importante: true
+       sugerencia.ayuda: true
+   sugerencia.leer:
+     description: Permiso para leer las sugerencias.
+     default: op
+   sugerencia.borrar:
+     description: Permiso para borrar sugerencias.
+     default: op
+   sugerencia.lista:
+     description: Permiso para ver las 10 primeras sugerencias en la lista.
+     default: op
+   sugerencia.reload:
+     description: Permiso para usar /sugerencias reload.
+     default: op
+   sugerencia.importante:
+     description: Permiso para marcar una sugerencia como importante.
+     default: op
+   sugerencia.ayuda:
+     description: Permiso para ver los comandos existentes.
+     default: true
