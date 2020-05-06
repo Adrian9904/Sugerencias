@@ -1,6 +1,5 @@
 package com.gmail.adriandc9904.comandos;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import com.gmail.adriandc9904.Sugerencias;
 import com.gmail.adriandc9904.data.*;
+import com.gmail.adriandc9904.mensajes.Messages;
 
 public class Comandos implements CommandExecutor {
 	
@@ -23,7 +23,15 @@ public class Comandos implements CommandExecutor {
 	}
 
 	private void msg(CommandSender sender, String texto) {
-		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', texto));
+		String nombre = plugin.nombre.replace(" ", "");
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', texto
+				.replaceAll("%plugin%", nombre)));
+	}
+	
+	private void msg(CommandSender sender, String texto, int pagina) {
+		String nombre = plugin.nombre.replace(" ", "");
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', texto
+				.replaceAll("%plugin%", nombre).replaceAll("%page%", String.valueOf(pagina))));
 	}
 	
 	private void msg(CommandSender sender, List<String> lista) {
@@ -32,23 +40,10 @@ public class Comandos implements CommandExecutor {
 		}
 	}
 	
-	private List<String> comandos() {
-		List<String> cmd = new ArrayList<String>();
-		cmd.add("&cLos comandos existentes son:");
-		cmd.add("&a/sugerencia (tu sugerencia) &7:Añade una sugerencia a la lista");
-		cmd.add("&a/sugerencia leer (indice) &7:Lee una de las sugerencias guardadas");
-		cmd.add("&a/sugerencia lista importantes &7:Mira las sugerencias importantes");
-		cmd.add("&a/sugerencia lista [pagina] &7:Mira la lista de sugerencias");
-		cmd.add("&a/sugerencia borrar (indice) &7:Borra una de las sugerencias");
-		cmd.add("&a/sugerencia importante (indice) &7:Guarda una sugerencia como importante");
-		cmd.add("&a/sugerencia cantidad &7:Muesta la cantidad de sugerencias");
-		cmd.add("&a/sugerencia reload &7:Recarga la config.yml");
-		cmd.add("&a/sugerencia ayuda &7:Abre este menu de ayuda");
-		return cmd;
-	}
-	
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		Messages mensajes = new Messages(plugin);
+		
 		if(label.equalsIgnoreCase("sugerencia") || command.getAliases().contains(label)) {
 			
 			FileConfiguration config = plugin.getConfig();
@@ -56,38 +51,43 @@ public class Comandos implements CommandExecutor {
 			List<String> importante = config.getStringList("sug-importantes");
 			
 			if(args.length == 0) {
-				msg(sender, "&aPara escribir tu sugerencia, pon &7/sugerencia (tu sugerencia)");	
+				msg(sender, mensajes.unwrittenSug());
 				if(sender.hasPermission("sugerencia.ayuda")) {
-					msg(sender, "&aMira los comandos disponibles con /sugerencia help");
+					msg(sender, mensajes.sugFormatHelp());
 				}
 			}
 			
-			else if(args[0].equalsIgnoreCase("leer") && sender.hasPermission("sugerencia.leer")) {
+			else if((args[0].equalsIgnoreCase("leer") || args[0].equalsIgnoreCase("read"))
+					&& sender.hasPermission("sugerencia.leer")) {
 				if(args.length == 2) {
 					try {
 						int indice = Integer.valueOf(args[1]);
 						if(indice <= lista.size() && indice > 0) {
-							sender.sendMessage(plugin.nombre + ChatColor.RESET + lista.get(indice - 1));
+							msg(sender, plugin.nombre + ChatColor.RESET + lista.get(indice - 1));
 						}
 						else {
 							if(lista.size() < 1) {
-								msg(sender, "&cLa lista esta &7vacia&a.");
+								msg(sender, mensajes.emptyList());
+							}
+							else if(indice < 1) {
+								msg(sender, mensajes.negativeIndex());
 							}
 							else {
-								msg(sender, "&cEl indice que escogiste es muy &7alto &co muy &7bajo.");	
+								msg(sender, mensajes.topIndex());	
 							}
 						}
 					}
 					catch(NumberFormatException e) {
-						msg(sender, "&cEscribe un numero valido.");
+						msg(sender, mensajes.invalidIndex());
 					}
 				}
 				else {
-					msg(sender, "&aEl uso correcto del comando es &7/sugerencia leer (indice)");
+					msg(sender, mensajes.readFormat());
 				}
 			}
 			
-			else if(args[0].equalsIgnoreCase("borrar") && sender.hasPermission("sugerencia.borrar")) {
+			else if((args[0].equalsIgnoreCase("borrar") || args[0].equalsIgnoreCase("delete"))
+					&& sender.hasPermission("sugerencia.borrar")) {
 				if(args.length == 2) {
 					try {
 						int eliminacion = Integer.valueOf(args[1]) - 1;   
@@ -95,38 +95,39 @@ public class Comandos implements CommandExecutor {
 							lista.remove(eliminacion);
 							config.set("sugerencias", lista);
 							plugin.saveConfig();
-							msg(sender, "&aLa sugerencia fue borrada con exito");
-						}
-						else if(eliminacion < 0) {
-							msg(sender, "&cNecesitas ingresar un numero positivo.");
+							msg(sender, mensajes.deleteSuccess());
 						}
 						else if(lista.size() < 1) {
-							msg(sender, "&cLa lista esta &7vacia&a.");
+							msg(sender, mensajes.emptyList());
+						}
+						else if(eliminacion < 0) {
+							msg(sender, mensajes.negativeIndex());
 						}
 						else {
-							msg(sender, "&cEste numero es mayor que las sugerencias, usa &7/sugerencia cantidad");
+							msg(sender, mensajes.topIndex());
 						}
 					}
 					catch(NumberFormatException e) {
-						msg(sender, "&cEscribe un numero valido ");
+						msg(sender, mensajes.invalidIndex());
 					}
 				}
 				else {
-					msg(sender, "&aEl uso correcto del comando es &7/sugerencia borrar (indice)");
+					msg(sender, mensajes.deleteFormat());
 				}
 			}
 			
-			else if(args[0].equalsIgnoreCase("lista") && sender.hasPermission("sugerencia.lista")) {
+			else if((args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list"))
+					&& sender.hasPermission("sugerencia.lista")) {
 				if(args.length == 1) {
-					msg(sender, plugin.nombre + "&cLas sugerencias más antiguas hechas fueron:");
+					msg(sender, mensajes.listHeader());
 					for(int i = 0; i < 10; i++) {
 						if(lista.size() > i) {
 							int orden = i + 1;
-							sender.sendMessage(ChatColor.GREEN + "" + orden + ". " + ChatColor.GRAY + "" + lista.get(i));
+							msg(sender, "&a" + orden + ". &7" + lista.get(i));
 						}
 					}
 					if(lista.size() == 0) {
-						msg(sender, "&aLa lista de sugerencias esta &7vacia");
+						msg(sender, mensajes.emptyList());
 					}
 				}
 				else if(args.length == 2) {
@@ -134,7 +135,7 @@ public class Comandos implements CommandExecutor {
 						int pagina = Integer.valueOf(args[1]);
 						if(pagina > 0 && lista.size() > 0) {
 							if(((pagina - 1) * 10) + 1 <= lista.size()) {
-								msg(sender, plugin.nombre + "&cLas sugerencias en la pagina " + pagina + " son:");
+								msg(sender, mensajes.listPageHeader(), pagina);
 								int i = 0;
 								if(pagina > 1) {
 									i = (pagina - 1) * 10;
@@ -147,42 +148,45 @@ public class Comandos implements CommandExecutor {
 								}
 							}
 							else {
-								msg(sender, "&cLa pagina que seleccionaste esta &7vacia");
+								msg(sender, mensajes.emptyPage());
 							}
 						}
 						else {
-							msg(sender, "&cLa pagina que seleccionaste esta &7vacia &co es un numero &7invalido");
+							msg(sender, mensajes.invalidPage());
 						}
 					}
 					catch(NumberFormatException error) {
-						if(args[1].equalsIgnoreCase("importantes") || args[1].equalsIgnoreCase("importante")) {
-							msg(sender, plugin.nombre + "&cSugerencias marcadas como importantes:");
+						if(args[1].equalsIgnoreCase("importantes") || args[1].equalsIgnoreCase("importante")
+								|| args[1].equalsIgnoreCase("important")) {
+							msg(sender, mensajes.listImportantHeader());
 							for(int i = 0; i < 10; i++) {
 								if(importante.size() > i) {
 									int orden = i + 1;
-									sender.sendMessage(ChatColor.GREEN + "" + orden + ". " + ChatColor.GRAY + "" + importante.get(i));
+									msg(sender, "&a" + orden + ". &7" + importante.get(i));
 								}
 							}
 							if(importante.size() == 0) {
-								msg(sender, "&aLa lista de sugerencias esta &7vacia");
+								msg(sender, mensajes.emptyList());
 							}
 						}
 						else {
-							msg(sender, "&aUsa &7/sugerencias lista &ao &7/sugerencias lista importantes");
+							msg(sender, mensajes.listFormat());
 						}
 					}
 				}
 				else {
-					msg(sender, "&aUsa &7/sugerencias lista &ao &7/sugerencias lista importantes");
+					msg(sender, mensajes.listFormat());
 				}
 			}
 			
 			else if(args[0].equalsIgnoreCase("reload") && sender.hasPermission("sugerencia.reload")) {
 				plugin.reloadConfig();
-				msg(sender, plugin.nombre + "&aSugerencias recargadas correctamente");
+				plugin.reloadMessages();
+				msg(sender, mensajes.successReload());
 			}
 			
-			else if((args[0].equalsIgnoreCase("importante") || args[0].equalsIgnoreCase("importantes"))
+			else if((args[0].equalsIgnoreCase("importante") || args[0].equalsIgnoreCase("importantes")
+					|| args[0].equalsIgnoreCase("important"))
 					&& sender.hasPermission("sugerencia.importante")) {
 				if(args.length == 2) {
 					try {
@@ -191,28 +195,32 @@ public class Comandos implements CommandExecutor {
 							importante.add(lista.get(imp));
 							config.set("sug-importantes", importante);
 							plugin.saveConfig();
-							msg(sender, "&aSugerencia marcada como &7&limportante &acorrectamente.");
+							msg(sender, mensajes.setImportantSuccessfully());
 						}
 						else {
-							msg(sender, "&cIngresa un &7numero positivo &ccomo &7indice");
+							msg(sender, mensajes.negativeIndex());
 						}
 					}
 					catch(NumberFormatException e) {
-						msg(sender, "&cIngresa un &7numero valido &ccomo &7indice");
+						msg(sender, mensajes.invalidIndex());
 					}
 				}
 				else {
-					msg(sender, "&a el uso correcto del comando es &7/sugerencia importante (indice)");
+					msg(sender, mensajes.importantFormat());
 				}
 				//Aun falta evitar que se repitan, se puede poner /sugerencia importante 1 varias veces dandonos la misma sugerencia
 			}
-			else if(args[0].equalsIgnoreCase("cantidad") && sender.hasPermission("sugerencia.leer")) {
-				msg(sender, "&aActualmente hay &7" + lista.size() + " &asugerencias almacenadas.");
+			
+			else if((args[0].equalsIgnoreCase("cantidad") || args[0].equalsIgnoreCase("amount"))
+					&& sender.hasPermission("sugerencia.leer")) {
+				msg(sender, mensajes.sugAmount().replaceAll("%amount%", String.valueOf(lista.size())));
 			}
+			
 			else if((args[0].equalsIgnoreCase("ayuda") || args[0].equalsIgnoreCase("help")) &&
 					args.length == 1 && sender.hasPermission("sugerencia.ayuda")) {
-				msg(sender, comandos());
+				msg(sender, mensajes.helpList());
 			}
+			
 			else {
 				if(cooldown(sender)) {
 					String texto = "";
@@ -228,7 +236,7 @@ public class Comandos implements CommandExecutor {
 					lista.add(texto);
 					config.set("sugerencias", lista);
 					plugin.saveConfig();
-					msg(sender, "&aSugerencia guardada con exito");
+					msg(sender, mensajes.success());
 				}
 			}
 			return true;
@@ -237,6 +245,8 @@ public class Comandos implements CommandExecutor {
 	}
 	
 	private boolean cooldown(CommandSender sender) {
+		Messages mensajes = new Messages(plugin);
+		
 		if(sender instanceof Player) {
 			FileConfiguration config = plugin.getConfig();
 			Player jugador = (Player) sender;
@@ -260,7 +270,7 @@ public class Comandos implements CommandExecutor {
 				}
 				return true;
 			}
-			msg(sender, "&cAun necesitas esperar &7" + c.getCooldown(uuid)+ " &cpara hacer otra sugerencia.");
+			msg(sender, mensajes.cooldown().replaceAll("%cooldown%", c.getCooldown(uuid)));
 			return false;
 		}
 		return true;

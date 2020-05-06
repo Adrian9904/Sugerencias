@@ -2,18 +2,10 @@
 # activar: true //Se debe permitir mandar sugerencias?
 # cooldown: 3600 //tiempo de enfriamient del comando en segundos
 # notificar: true //Notificar al entrar un usuario con el permiso "sugerencias.recibir"
+# language: messages_ES //Idioma de los mensajes(messages_ES, messages_EN)
 # sugerencias-permitidas:2 //Sugerencias permitidas antes de iniciar el cooldown
 # sugerencias: (Lista de sugerencias) //Aqui se escriben las sugerencias que hay escritas
 # sug-importantes: (Lista de sugerencias) //Aqui se escriben las sugerencias que marcaste como
 # importantes, estas solo se pueden borrar de manera manual.
-# config-version: 1 //No tocar
+# config-version: 2 //No tocar
 # 
- activar: true
- cooldown: 3600
- notificar: true
- sugerencias-permitidas: 2
- sugerencias:
- - 'Aca se guardaran las sugerencias'
- sug-importantes:
- - 'Aca se guardan las sugerencias marcadas como importantes con /sugerencia importante (indice)'
- config-version: 1
